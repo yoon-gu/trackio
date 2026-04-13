@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>trackio · smoke-test</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; margin: 0; padding: 24px; background: #f7f8fa; color: #111827; }
+header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+header .subtitle { color: #6b7280; font-size: 13px; }
+header .generated { color: #9ca3af; font-size: 11px; margin-left: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+.panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
+.runs-panel { max-height: calc(100vh - 110px); overflow-y: auto; position: sticky; top: 20px; }
+.runs-panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin: 0 0 12px; }
+.runs-panel .bulk { font-size: 11px; color: #2563eb; cursor: pointer; user-select: none; margin-bottom: 10px; display: inline-block; }
+.runs-panel .bulk:hover { text-decoration: underline; }
+.run-item { padding: 10px 0; border-top: 1px solid #f1f3f5; }
+.run-item:first-of-type { border-top: none; padding-top: 0; }
+.run-head { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.run-head input { margin: 0; }
+.run-swatch { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 10px; }
+.run-name { font-weight: 500; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.run-meta { font-size: 10px; color: #9ca3af; margin: 4px 0 0 26px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.run-config { margin: 6px 0 0 26px; font-size: 11px; color: #6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.55; }
+.run-config span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+.chart-container { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 14px 10px; }
+.chart-container h3 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #111827; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.chart { width: 100%; display: block; }
+.chart .grid { stroke: #f1f3f5; stroke-width: 1; }
+.chart .axis { stroke: #d1d5db; stroke-width: 1; }
+.chart .tick { font-size: 10px; fill: #6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.chart .cursor { stroke: #9ca3af; stroke-width: 1; stroke-dasharray: 3 3; display: none; }
+.tooltip { position: fixed; background: rgba(17, 24, 39, 0.96); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 1000; display: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; box-shadow: 0 4px 14px rgba(0,0,0,0.18); max-width: 260px; }
+.tooltip .ttrow { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.tooltip .ttrow .sw { width: 8px; height: 8px; border-radius: 1px; flex: 0 0 8px; }
+.tooltip .ttrow .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tooltip .ttstep { font-weight: 600; color: #e5e7eb; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 4px; margin-bottom: 2px; }
+.empty { color: #6b7280; padding: 40px; text-align: center; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>smoke-test</h1>
+  <span class="subtitle" id="subtitle"></span>
+  <span class="generated" id="generated"></span>
+</header>
+<div class="layout">
+  <aside class="panel runs-panel">
+    <h2>Runs</h2>
+    <span class="bulk" id="bulk-toggle">toggle all</span>
+    <div id="runs-list"></div>
+  </aside>
+  <main>
+    <div class="charts-grid" id="charts"></div>
+  </main>
+</div>
+<div class="tooltip" id="tooltip"></div>
+<script id="trackio-data" type="application/json">{"project": "smoke-test", "runs": {"baseline-1776112390723": {"name": "baseline", "config": {"lr": 0.01, "bs": 32, "model": "mlp"}, "metrics": {"loss": [[0, 2.018820774952374], [1, 1.9388890488530661], [2, 1.8271890191782751], [3, 1.7698081754741892], [4, 1.6692569662771957], [5, 1.592981712638121], [6, 1.514454045443492], [7, 1.427767348404671], [8, 1.3463703526905801], [9, 1.2906448992816626], [10, 1.221621329197934], [11, 1.1967814554022427], [12, 1.1359994679538623], [13, 1.0676767022383076], [14, 1.0373439334716283], [15, 0.945970271816754], [16, 0.9461983487866211], [17, 0.8843177500300624], [18, 0.8616620503789353], [19, 0.7883446549940794], [20, 0.7584709035858329], [21, 0.7118294594343098], [22, 0.7042214436607396], [23, 0.6345331395585279], [24, 0.6392872507739954], [25, 0.6194388480085912], [26, 0.5460373149432217], [27, 0.5662332957798291], [28, 0.5267049007353738], [29, 0.48546589635663406], [30, 0.47208700066865356], [31, 0.4595356067897068], [32, 0.44181649179278043], [33, 0.3877329990401734], [34, 0.3739956188647506], [35, 0.39477389211657793], [36, 0.3360592693895696], [37, 0.329224350754288], [38, 0.33049085082608787], [39, 0.32518682714804126], [40, 0.29581199954303833], [41, 0.30667280436280425], [42, 0.2604687353597972], [43, 0.24219060793712183], [44, 0.2505942889448829], [45, 0.2410424180589798], [46, 0.2026343513374954], [47, 0.23628665535638863], [48, 0.2091632547293722], [49, 0.19794571644897574], [50, 0.20989656843924623], [51, 0.1957440164802695], [52, 0.15192599470595272], [53, 0.17016777638474215], [54, 0.1467196735969977], [55, 0.12809233727464564], [56, 0.16727502294509905], [57, 0.15043967003049835], [58, 0.15536800325083702], [59, 0.1241745297762129], [60, 0.1130381510016864], [61, 0.11806659466421746], [62, 0.11907277887149384], [63, 0.10266090069878943], [64, 0.12506759515957713], [65, 0.08517090851085136], [66, 0.11130306400040386], [67, 0.0900529963856565], [68, 0.08029793996780621], [69, 0.10050286345066411], [70, 0.08369734728366827], [71, 0.06950612039987883], [72, 0.06835363236906825], [73, 0.05683543134151911], [74, 0.07970425833806488], [75, 0.07057120506667952], [76, 0.09379422021893524], [77, 0.0820414683743524], [78, 0.07518498685932734], [79, 0.07796544139713824]], "acc": [[0, 0.01461884246316199], [1, 0.06807309473786789], [2, 0.1401367359452811], [3, 0.18590192503626263], [4, 0.2502820204568526], [5, 0.28872261501885416], [6, 0.34503732870091797], [7, 0.39031746579220716], [8, 0.42263871664873465], [9, 0.4521703856111712], [10, 0.505799188188098], [11, 0.5351033863320296], [12, 0.5521165309846875], [13, 0.5924845306733122], [14, 0.6248303609011882], [15, 0.6394263886174119], [16, 0.6690343775996751], [17, 0.6897597237008719], [18, 0.7143873648098241], [19, 0.7211908614012145], [20, 0.7422045814987758], [21, 0.767274514308147], [22, 0.7889300557100846], [23, 0.7889722385776896], [24, 0.8057373059156804], [25, 0.8216266089175385], [26, 0.8234705229401811], [27, 0.8457459403732626], [28, 0.8527012408693397], [29, 0.862147932721588], [30, 0.8710684493298056], [31, 0.8762283791001444], [32, 0.8981869278429541], [33, 0.8933582377502477], [34, 0.9159624387352404], [35, 0.9087693696250069], [36, 0.9144955113128658], [37, 0.9211727615231089], [38, 0.9264885757048336], [39, 0.9435999553932161], [40, 0.9359655400118033], [41, 0.9477040219113997], [42, 0.9439177720405634], [43, 0.953527381183839], [44, 0.9496333816091486], [45, 0.9625329473691846], [46, 0.9685216612579264], [47, 0.9734908937841945], [48, 0.9687203050611004], [49, 0.9664407431529566], [50, 0.9791040935059402], [51, 0.9738389502737078], [52, 0.9704182432629819], [53, 0.9826951672123085], [54, 0.975494054174706], [55, 0.9774676555106301], [56, 0.97712992524453], [57, 0.9930205792431978], [58, 0.9846062243658761], [59, 0.9841034173860531], [60, 0.9870952201525631], [61, 0.9833821705878187], [62, 0.9940790092987647], [63, 0.9936164710302785], [64, 1.0013873302357919], [65, 0.9907612919477778], [66, 1.000660804713245], [67, 1.0033932669230758], [68, 1.0073253705249292], [69, 1.0006717569126704], [70, 0.9956100748124196], [71, 1.0041334274857892], [72, 1.0078659364143598], [73, 1.007204416564305], [74, 0.9937678799688134], [75, 1.0000028576671258], [76, 1.0026273071734821], [77, 1.0040763961013766], [78, 1.0126543661466825], [79, 1.012211671743186]]}, "start_time": 1776112390.723418, "end_time": 1776112390.727547}, "tuned-1776112390728": {"name": "tuned", "config": {"lr": 0.03, "bs": 64, "model": "mlp"}, "metrics": {"loss": [[0, 1.6211608849149854], [1, 1.5015542653331986], [2, 1.355324051267245], [3, 1.2597725783621307], [4, 1.1572805316419013], [5, 1.0810312520939336], [6, 1.0085340720081057], [7, 0.9257908846417039], [8, 0.8412157908953362], [9, 0.7692499677755772], [10, 0.7198619278207579], [11, 0.6407644855373679], [12, 0.5937936797655293], [13, 0.5730514133611015], [14, 0.5325192446633894], [15, 0.482128360830198], [16, 0.4557116579559666], [17, 0.42339692940974794], [18, 0.3693502395287006], [19, 0.3657352935557065], [20, 0.3278313682052047], [21, 0.2939086128076404], [22, 0.2579220961320801], [23, 0.2737092018157695], [24, 0.24674107206676255], [25, 0.219967350260042], [26, 0.1915292216150338], [27, 0.17464986562657292], [28, 0.16732564797528704], [29, 0.1688793440956068], [30, 0.16097237951221754], [31, 0.13599733299055053], [32, 0.13425028893254365], [33, 0.13097065277305428], [34, 0.11986115716913621], [35, 0.1256298332471911], [36, 0.09706498330397084], [37, 0.10364908470396772], [38, 0.08403821243622], [39, 0.0718779353465276], [40, 0.08144347711310783], [41, 0.0690610222641461], [42, 0.06088753715412083], [43, 0.084339399842017], [44, 0.05822409166399389], [45, 0.0512860612871289], [46, 0.07222924895301723], [47, 0.06687443341799137], [48, 0.0482895737561764], [49, 0.04732524757422043], [50, 0.04799995496498743], [51, 0.027726718292166663], [52, 0.030676450968879193], [53, 0.020978676120523995], [54, 0.04613016229659614], [55, 0.03134117521650644], [56, 0.04484742196255164], [57, 0.03541229015432968], [58, 0.05270528692386533], [59, 0.04109930570186755], [60, 0.050472153887676716], [61, 0.025866612054119824], [62, 0.03986625217855803], [63, 0.04629449963678402], [64, 0.03849530604639983], [65, 0.02911864604987216], [66, 0.016552582674857784], [67, 0.03990002558749276], [68, 0.021677550118891553], [69, 0.04146717273923506], [70, 0.006703424643771696], [71, 0.032049919215636304], [72, 0.030316127846047182], [73, 0.02632645757909301], [74, 0.0045362811896388425], [75, 0.025191876167948365], [76, 0.012205117850164596], [77, 0.028240687424385295], [78, 0.005210835387209449], [79, 0.03961855968307401]], "acc": [[0, 0.007436636272002297], [1, 0.10345058583943362], [2, 0.18137420212533809], [3, 0.26846327669990744], [4, 0.3329497745755276], [5, 0.4084591975996932], [6, 0.4560459821311411], [7, 0.5125706147090066], [8, 0.559910622696511], [9, 0.5992889202580416], [10, 0.6326563164447547], [11, 0.6844546723232938], [12, 0.7026071724839748], [13, 0.7440507451773505], [14, 0.7639800396474631], [15, 0.7906610390007356], [16, 0.8120602908970853], [17, 0.8246312512656079], [18, 0.852368866772404], [19, 0.8574668858881418], [20, 0.8788497391003506], [21, 0.8877801980138746], [22, 0.895086872627419], [23, 0.9001832303358805], [24, 0.9169558531388445], [25, 0.9354788280934301], [26, 0.9312172022669066], [27, 0.941237767417815], [28, 0.9527903127414835], [29, 0.9547263097340556], [30, 0.9568420335491515], [31, 0.9567500865921821], [32, 0.9749871688117855], [33, 0.9650194360195109], [34, 0.9812104735242679], [35, 0.988703746833166], [36, 0.9808883696133303], [37, 0.9943137271214173], [38, 0.988707488568867], [39, 0.9967443160336061], [40, 1.0008481443573969], [41, 0.9945555371514581], [42, 0.9898969560731535], [43, 1.0021883591957792], [44, 0.9982997860226731], [45, 1.0056154200296874], [46, 1.0041559235554185], [47, 0.9987524232006734], [48, 1.0105307082505244], [49, 0.9971516148931162], [50, 0.9970642425033551], [51, 1.000263568734079], [52, 1.0051314891477363], [53, 1.0061645216186674], [54, 1.002049373095034], [55, 1.000573361475613], [56, 1.0108361914695696], [57, 1.011150141546108], [58, 1.0007927166502664], [59, 0.9976754936481231], [60, 1.0029336282910586], [61, 1.0114128344684323], [62, 1.0079944339773486], [63, 1.015732203245934], [64, 1.0155965499144097], [65, 1.0134829794588693], [66, 1.0040649290188919], [67, 0.9994386198045269], [68, 1.0068972418079916], [69, 1.0064587614958471], [70, 1.0132247827868115], [71, 1.0087010092693804], [72, 1.0177722454722014], [73, 1.0156324179629481], [74, 1.019037178797138], [75, 1.0165876651831338], [76, 1.0020603173662768], [77, 1.006814780562566], [78, 1.008646771418144], [79, 1.0004473868717565]], "grad_norm": [[0, 0.5987063321486674], [1, 0.5493367450274044], [2, 0.6019853242860455], [3, 0.5629248503314186], [4, 0.694352427701484], [5, 0.6480338047918871], [6, 0.5637301866059253], [7, 0.6779802806668248], [8, 0.5387864150276016], [9, 0.6220903220034981], [10, 0.6566197236643443], [11, 0.5008709985890636], [12, 0.6731905280787545], [13, 0.5955668045871695], [14, 0.5292820039033193], [15, 0.5307663078234135], [16, 0.5270730461718681], [17, 0.6248830005187621], [18, 0.6437532224302641], [19, 0.5758433908255081], [20, 0.5381932699083896], [21, 0.5493899095164789], [22, 0.5732732666513574], [23, 0.6922890857009004], [24, 0.5107309220801685], [25, 0.6605869542292426], [26, 0.5105078137553524], [27, 0.5905300573830964], [28, 0.5298518777068225], [29, 0.5749284380434647], [30, 0.5034266705284468], [31, 0.6070256643769768], [32, 0.582671969771355], [33, 0.6085274376296468], [34, 0.6668692213484974], [35, 0.5704402727036871], [36, 0.6730484507222092], [37, 0.5849118121015566], [38, 0.5378642154971409], [39, 0.6962898346648962], [40, 0.5503351487398077], [41, 0.6600376125756985], [42, 0.5778418864466496], [43, 0.6775068873461487], [44, 0.5026933374699664], [45, 0.5207774190193755], [46, 0.5605597557146154], [47, 0.6657908519972768], [48, 0.5980307321809513], [49, 0.587834315328453], [50, 0.6576458155815391], [51, 0.6270437272493056], [52, 0.5336306059165709], [53, 0.6384352071447105], [54, 0.6378478905122513], [55, 0.5371084084455539], [56, 0.5520122358462739], [57, 0.5918560242332223], [58, 0.6364162901475551], [59, 0.523888130666066], [60, 0.6655738085394248], [61, 0.5108109513582433], [62, 0.6608933989878188], [63, 0.5850390832239591], [64, 0.675602234426812], [65, 0.5056181884698555], [66, 0.6753594244623589], [67, 0.6756504818362382], [68, 0.6671676619237082], [69, 0.5447470701486077], [70, 0.6901232977792835], [71, 0.5815274850180849], [72, 0.6046715261851532], [73, 0.5937969293703634], [74, 0.5880464938395555], [75, 0.5835248752835578], [76, 0.652225681377493], [77, 0.616865666140788], [78, 0.6864354174651763], [79, 0.5165768641166759]]}, "start_time": 1776112390.728301, "end_time": 1776112390.7331772}, "short-1776112390734": {"name": "short", "config": {"lr": 0.1, "bs": 128}, "metrics": {"loss": [[0, 3.0235575028565203], [1, 2.7216316386458748], [2, 2.3373020473674178], [3, 2.152676178364253], [4, 1.893071053128611], [5, 1.651768609381258], [6, 1.4223442820413317], [7, 1.269006232191912], [8, 1.1673604809951375], [9, 1.0581902868910098], [10, 0.8910560128302683], [11, 0.8144746928363589], [12, 0.7333150524087977], [13, 0.6522925683193993], [14, 0.5755653020975376], [15, 0.5419353388680517], [16, 0.4406763271783966], [17, 0.37065181849759643], [18, 0.31661352865595094], [19, 0.33241971235482126], [20, 0.3305143930932235], [21, 0.2296201564759188], [22, 0.19922998924303922], [23, 0.2017430071319879], [24, 0.24085237846879237], [25, 0.15949556054355363], [26, 0.1691443853377577], [27, 0.1291400881864212], [28, 0.15742699156716866], [29, 0.0948939612040251], [30, 0.16039537477670596], [31, 0.0635631059892733], [32, 0.14614675408028388], [33, 0.1437938691790156], [34, 0.1389485135703785], [35, 0.04075619544414745], [36, 0.11485686234822531], [37, 0.05074842412060247], [38, 0.026564221658991735], [39, 0.10780072600910277]], "acc": [[0, 0.0], [1, 0.15351827510938587], [2, 0.28346868942621073], [3, 0.3934693402873666], [4, 0.486582880967408], [5, 0.5654017914929218], [6, 0.6321205588285577], [7, 0.6885967760854024], [8, 0.7364028618842733], [9, 0.7768698398515702], [10, 0.8111243971624382], [11, 0.8401202539203061], [12, 0.8646647167633873], [13, 0.8854411560073123], [14, 0.9030280321355949], [15, 0.9179150013761012], [16, 0.9305165487771985], [17, 0.9411835283575701], [18, 0.950212931632136], [19, 0.9578561564907236], [20, 0.9643260066527476], [21, 0.9698026165776815], [22, 0.9744384667934926], [23, 0.9783626292805069], [24, 0.9816843611112658], [25, 0.9844961464009907], [26, 0.986876271263059], [27, 0.9888910034617577], [28, 0.9905964374485048], [29, 0.9920400561512935], [30, 0.9932620530009145], [31, 0.9942964510019926], [32, 0.9951720500061686], [33, 0.995913228561536], [34, 0.9965406226635353], [35, 0.9970717003051818], [36, 0.9975212478233336], [37, 0.9979017815819191], [38, 0.9982238964542656], [39, 0.9984965608070224]]}, "start_time": 1776112390.734432, "end_time": 1776112390.738336}, "numpy-test-1776112390944": {"name": "numpy-test", "config": {"lr": 0.05000000074505806}, "metrics": {"loss": [[0, 1.0], [1, 0.5], [2, 0.3333333333333333], [3, 0.25], [4, 0.2], [5, 0.16666666666666666], [6, 0.14285714285714285], [7, 0.125], [8, 0.1111111111111111], [9, 0.1], [10, 0.09090909090909091], [11, 0.08333333333333333], [12, 0.07692307692307693], [13, 0.07142857142857142], [14, 0.06666666666666667], [15, 0.0625], [16, 0.058823529411764705], [17, 0.05555555555555555], [18, 0.05263157894736842], [19, 0.05], [20, 0.047619047619047616], [21, 0.045454545454545456], [22, 0.043478260869565216], [23, 0.041666666666666664], [24, 0.04], [25, 0.038461538461538464], [26, 0.037037037037037035], [27, 0.03571428571428571], [28, 0.034482758620689655], [29, 0.03333333333333333]], "acc": [[0, 0.0], [1, 1.0], [2, 2.0], [3, 3.0], [4, 4.0], [5, 5.0], [6, 6.0], [7, 7.0], [8, 8.0], [9, 9.0], [10, 10.0], [11, 11.0], [12, 12.0], [13, 13.0], [14, 14.0], [15, 15.0], [16, 16.0], [17, 17.0], [18, 18.0], [19, 19.0], [20, 20.0], [21, 21.0], [22, 22.0], [23, 23.0], [24, 24.0], [25, 25.0], [26, 26.0], [27, 27.0], [28, 28.0], [29, 29.0]]}, "start_time": 1776112390.944712, "end_time": 1776112390.9500842}}, "generated_at": 1776112390.950871}</script>
+<script>
+(function () {
+  var raw = document.getElementById('trackio-data').textContent;
+  var DATA = JSON.parse(raw);
+  var runs = DATA.runs || {};
+  var runIds = Object.keys(runs).sort(function (a, b) {
+    return (runs[a].start_time || 0) - (runs[b].start_time || 0);
+  });
+  var COLORS = ["#2563eb","#dc2626","#16a34a","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#4f46e5","#ea580c","#0d9488","#b45309"];
+  var runColors = {};
+  runIds.forEach(function (id, i) { runColors[id] = COLORS[i % COLORS.length]; });
+  var visible = {};
+  runIds.forEach(function (id) { visible[id] = true; });
+
+  var metricSet = {};
+  runIds.forEach(function (id) {
+    var m = runs[id].metrics || {};
+    Object.keys(m).forEach(function (k) { metricSet[k] = true; });
+  });
+  var metricList = Object.keys(metricSet).sort();
+
+  document.getElementById('subtitle').textContent =
+    runIds.length + ' run' + (runIds.length === 1 ? '' : 's') + ' · ' +
+    metricList.length + ' metric' + (metricList.length === 1 ? '' : 's');
+  if (DATA.generated_at) {
+    var d = new Date(DATA.generated_at * 1000);
+    document.getElementById('generated').textContent = 'updated ' + d.toLocaleString();
+  }
+
+  var runsListEl = document.getElementById('runs-list');
+  runIds.forEach(function (id) {
+    var r = runs[id];
+    var item = document.createElement('div');
+    item.className = 'run-item';
+    var head = document.createElement('label');
+    head.className = 'run-head';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.dataset.runId = id;
+    cb.addEventListener('change', function () {
+      visible[id] = cb.checked;
+      renderCharts();
+    });
+    var sw = document.createElement('span');
+    sw.className = 'run-swatch';
+    sw.style.background = runColors[id];
+    var nm = document.createElement('span');
+    nm.className = 'run-name';
+    nm.textContent = r.name || id;
+    nm.title = r.name || id;
+    head.appendChild(cb); head.appendChild(sw); head.appendChild(nm);
+    item.appendChild(head);
+    if (r.start_time) {
+      var meta = document.createElement('div');
+      meta.className = 'run-meta';
+      var ds = new Date(r.start_time * 1000);
+      var dur = r.end_time ? fmtDuration(r.end_time - r.start_time) : 'running';
+      meta.textContent = ds.toLocaleString() + ' · ' + dur;
+      item.appendChild(meta);
+    }
+    var cfg = r.config || {};
+    var cfgKeys = Object.keys(cfg);
+    if (cfgKeys.length) {
+      var cdiv = document.createElement('div');
+      cdiv.className = 'run-config';
+      cfgKeys.slice(0, 8).forEach(function (k) {
+        var s = document.createElement('span');
+        s.textContent = k + ': ' + formatCfg(cfg[k]);
+        s.title = k + ': ' + String(cfg[k]);
+        cdiv.appendChild(s);
+      });
+      if (cfgKeys.length > 8) {
+        var more = document.createElement('span');
+        more.textContent = '… +' + (cfgKeys.length - 8) + ' more';
+        cdiv.appendChild(more);
+      }
+      item.appendChild(cdiv);
+    }
+    runsListEl.appendChild(item);
+  });
+
+  document.getElementById('bulk-toggle').addEventListener('click', function () {
+    var boxes = runsListEl.querySelectorAll('input[type=checkbox]');
+    var anyOn = false;
+    boxes.forEach(function (b) { if (b.checked) anyOn = true; });
+    boxes.forEach(function (b) {
+      b.checked = !anyOn;
+      visible[b.dataset.runId] = b.checked;
+    });
+    renderCharts();
+  });
+
+  function formatCfg(v) {
+    if (v === null || v === undefined) return 'null';
+    if (typeof v === 'number') return fmtNum(v);
+    if (typeof v === 'string') return v.length > 28 ? v.slice(0, 28) + '…' : v;
+    if (typeof v === 'boolean') return String(v);
+    try { var s = JSON.stringify(v); return s.length > 28 ? s.slice(0, 28) + '…' : s; }
+    catch (e) { return String(v); }
+  }
+
+  function fmtDuration(sec) {
+    if (sec < 60) return sec.toFixed(1) + 's';
+    if (sec < 3600) return (sec / 60).toFixed(1) + 'm';
+    return (sec / 3600).toFixed(2) + 'h';
+  }
+
+  function fmtNum(v) {
+    if (!isFinite(v)) return String(v);
+    if (v === 0) return '0';
+    var a = Math.abs(v);
+    if (a >= 10000 || a < 0.001) return v.toExponential(2);
+    if (Number.isInteger(v)) return v.toString();
+    return parseFloat(v.toPrecision(4)).toString();
+  }
+
+  function niceNum(range, round) {
+    var exp = Math.floor(Math.log10(range));
+    var frac = range / Math.pow(10, exp);
+    var nf;
+    if (round) {
+      if (frac < 1.5) nf = 1;
+      else if (frac < 3) nf = 2;
+      else if (frac < 7) nf = 5;
+      else nf = 10;
+    } else {
+      if (frac <= 1) nf = 1;
+      else if (frac <= 2) nf = 2;
+      else if (frac <= 5) nf = 5;
+      else nf = 10;
+    }
+    return nf * Math.pow(10, exp);
+  }
+
+  function niceTicks(min, max, n) {
+    if (!isFinite(min) || !isFinite(max)) return { ticks: [0, 1], min: 0, max: 1 };
+    if (min === max) { min = min - 0.5; max = max + 0.5; }
+    var range = niceNum(max - min, false);
+    var step = niceNum(range / Math.max(1, n - 1), true);
+    var niceMin = Math.floor(min / step) * step;
+    var niceMax = Math.ceil(max / step) * step;
+    var ticks = [];
+    for (var v = niceMin; v <= niceMax + step / 2; v += step) ticks.push(Math.round(v / step) * step);
+    return { ticks: ticks, min: niceMin, max: niceMax };
+  }
+
+  var chartsEl = document.getElementById('charts');
+  var tooltip = document.getElementById('tooltip');
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
+  function renderCharts() {
+    chartsEl.innerHTML = '';
+    if (metricList.length === 0) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'No metrics logged yet. Call wandb.log({...}) to start.';
+      chartsEl.appendChild(e);
+      return;
+    }
+    metricList.forEach(function (key) {
+      chartsEl.appendChild(buildChart(key));
+    });
+  }
+
+  function buildChart(key) {
+    var container = document.createElement('div');
+    container.className = 'chart-container';
+    var h = document.createElement('h3');
+    h.textContent = key;
+    container.appendChild(h);
+
+    var series = [];
+    runIds.forEach(function (id) {
+      if (!visible[id]) return;
+      var m = runs[id].metrics || {};
+      if (!m[key] || m[key].length === 0) return;
+      var sorted = m[key].slice().sort(function (a, b) { return a[0] - b[0]; });
+      series.push({ id: id, name: runs[id].name || id, color: runColors[id], data: sorted });
+    });
+
+    var W = 520, H = 280;
+    var pad = { l: 58, r: 14, t: 10, b: 30 };
+    var innerW = W - pad.l - pad.r;
+    var innerH = H - pad.t - pad.b;
+
+    var svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('class', 'chart');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+    if (series.length === 0) {
+      var txt = document.createElementNS(SVGNS, 'text');
+      txt.setAttribute('x', W / 2);
+      txt.setAttribute('y', H / 2);
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('fill', '#9ca3af');
+      txt.setAttribute('font-size', '12');
+      txt.textContent = 'no visible runs';
+      svg.appendChild(txt);
+      container.appendChild(svg);
+      return container;
+    }
+
+    var xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+    series.forEach(function (s) {
+      s.data.forEach(function (p) {
+        if (p[0] < xMin) xMin = p[0];
+        if (p[0] > xMax) xMax = p[0];
+        if (p[1] < yMin) yMin = p[1];
+        if (p[1] > yMax) yMax = p[1];
+      });
+    });
+    if (xMin === xMax) { xMax = xMin + 1; }
+    if (yMin === yMax) { var pad0 = Math.max(1, Math.abs(yMin) * 0.1); yMin -= pad0; yMax += pad0; }
+
+    var yN = niceTicks(yMin, yMax, 6);
+    yMin = yN.min; yMax = yN.max;
+    var xN = niceTicks(xMin, xMax, 6);
+
+    function sx(x) { return pad.l + (x - xMin) / (xMax - xMin) * innerW; }
+    function sy(y) { return pad.t + (1 - (y - yMin) / (yMax - yMin)) * innerH; }
+
+    yN.ticks.forEach(function (v) {
+      var y = sy(v);
+      if (y < pad.t - 0.5 || y > pad.t + innerH + 0.5) return;
+      var g = document.createElementNS(SVGNS, 'line');
+      g.setAttribute('x1', pad.l); g.setAttribute('x2', pad.l + innerW);
+      g.setAttribute('y1', y); g.setAttribute('y2', y);
+      g.setAttribute('class', 'grid');
+      svg.appendChild(g);
+      var t = document.createElementNS(SVGNS, 'text');
+      t.setAttribute('x', pad.l - 6); t.setAttribute('y', y + 3);
+      t.setAttribute('text-anchor', 'end');
+      t.setAttribute('class', 'tick');
+      t.textContent = fmtNum(v);
+      svg.appendChild(t);
+    });
+
+    xN.ticks.forEach(function (v) {
+      if (v < xMin - 1e-9 || v > xMax + 1e-9) return;
+      var x = sx(v);
+      var t = document.createElementNS(SVGNS, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', pad.t + innerH + 16);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('class', 'tick');
+      t.textContent = fmtNum(v);
+      svg.appendChild(t);
+    });
+
+    var ax1 = document.createElementNS(SVGNS, 'line');
+    ax1.setAttribute('x1', pad.l); ax1.setAttribute('x2', pad.l + innerW);
+    ax1.setAttribute('y1', pad.t + innerH); ax1.setAttribute('y2', pad.t + innerH);
+    ax1.setAttribute('class', 'axis');
+    svg.appendChild(ax1);
+    var ax2 = document.createElementNS(SVGNS, 'line');
+    ax2.setAttribute('x1', pad.l); ax2.setAttribute('x2', pad.l);
+    ax2.setAttribute('y1', pad.t); ax2.setAttribute('y2', pad.t + innerH);
+    ax2.setAttribute('class', 'axis');
+    svg.appendChild(ax2);
+
+    series.forEach(function (s) {
+      var d = '';
+      s.data.forEach(function (p, i) {
+        d += (i === 0 ? 'M' : 'L') + sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1);
+      });
+      var path = document.createElementNS(SVGNS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', s.color);
+      path.setAttribute('stroke-width', '1.75');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(path);
+    });
+
+    var cursor = document.createElementNS(SVGNS, 'line');
+    cursor.setAttribute('class', 'cursor');
+    cursor.setAttribute('y1', pad.t);
+    cursor.setAttribute('y2', pad.t + innerH);
+    svg.appendChild(cursor);
+    var markers = [];
+    series.forEach(function (s) {
+      var c = document.createElementNS(SVGNS, 'circle');
+      c.setAttribute('r', '3.5');
+      c.setAttribute('fill', s.color);
+      c.setAttribute('stroke', '#fff');
+      c.setAttribute('stroke-width', '1.5');
+      c.style.display = 'none';
+      svg.appendChild(c);
+      markers.push(c);
+    });
+
+    function hideCursor() {
+      cursor.style.display = 'none';
+      markers.forEach(function (m) { m.style.display = 'none'; });
+      tooltip.style.display = 'none';
+    }
+
+    svg.addEventListener('mousemove', function (ev) {
+      var rect = svg.getBoundingClientRect();
+      var scale = rect.width / W;
+      var mx = (ev.clientX - rect.left) / scale;
+      if (mx < pad.l || mx > pad.l + innerW) { hideCursor(); return; }
+      var xVal = xMin + (mx - pad.l) / innerW * (xMax - xMin);
+      cursor.style.display = '';
+      cursor.setAttribute('x1', mx); cursor.setAttribute('x2', mx);
+      var rows = [];
+      series.forEach(function (s, i) {
+        var nearest = s.data[0], bestD = Math.abs(s.data[0][0] - xVal);
+        for (var k = 1; k < s.data.length; k++) {
+          var d = Math.abs(s.data[k][0] - xVal);
+          if (d < bestD) { bestD = d; nearest = s.data[k]; }
+        }
+        markers[i].style.display = '';
+        markers[i].setAttribute('cx', sx(nearest[0]));
+        markers[i].setAttribute('cy', sy(nearest[1]));
+        rows.push({ name: s.name, color: s.color, val: nearest[1], step: nearest[0] });
+      });
+      rows.sort(function (a, b) { return b.val - a.val; });
+      var step = rows[0].step;
+      var html = '<div class="ttstep">step ' + fmtNum(step) + '</div>';
+      rows.forEach(function (r) {
+        html += '<div class="ttrow"><span class="sw" style="background:' + r.color + '"></span>'
+             + '<span class="nm">' + escapeHtml(r.name) + '</span>'
+             + '<span style="margin-left:auto">' + fmtNum(r.val) + '</span></div>';
+      });
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+      var tx = ev.clientX + 14, ty = ev.clientY + 14;
+      if (tx + tw > vw - 8) tx = ev.clientX - tw - 14;
+      if (ty + th > vh - 8) ty = ev.clientY - th - 14;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top = ty + 'px';
+    });
+    svg.addEventListener('mouseleave', hideCursor);
+
+    container.appendChild(svg);
+    return container;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  renderCharts();
+})();
+</script>
+</body>
+</html>
