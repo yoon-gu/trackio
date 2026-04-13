@@ -587,17 +587,36 @@ header .generated { color: #9ca3af; font-size: 11px; margin-left: auto; font-fam
     return (runs[a].start_time || 0) - (runs[b].start_time || 0);
   });
   var COLORS = ["#2563eb","#dc2626","#16a34a","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#4f46e5","#ea580c","#0d9488","#b45309"];
+  var GPU_DASH = ["", "5 3", "2 2", "6 2 1 2", "1 2", "8 2 2 2", "3 1 1 1 1 1", "10 2"];
   var runColors = {};
   runIds.forEach(function (id, i) { runColors[id] = COLORS[i % COLORS.length]; });
   var visible = {};
   runIds.forEach(function (id) { visible[id] = true; });
 
-  var metricSet = {};
+  var GPU_RE = /^(.*?gpu)\.(\d+)\.(.+)$/;
+  var virtMap = {};
+  var metricKeySet = {};
   runIds.forEach(function (id) {
     var m = runs[id].metrics || {};
-    Object.keys(m).forEach(function (k) { metricSet[k] = true; });
+    Object.keys(m).forEach(function (k) { metricKeySet[k] = true; });
   });
-  var metricList = Object.keys(metricSet).sort();
+  var displaySet = {};
+  Object.keys(metricKeySet).forEach(function (k) {
+    var mm = k.match(GPU_RE);
+    if (mm) {
+      var virt = mm[1] + "." + mm[3];
+      var idx = parseInt(mm[2], 10);
+      if (!virtMap[virt]) virtMap[virt] = [];
+      virtMap[virt].push({ gpuIdx: idx, realKey: k });
+      displaySet[virt] = true;
+    } else {
+      displaySet[k] = true;
+    }
+  });
+  Object.keys(virtMap).forEach(function (vk) {
+    virtMap[vk].sort(function (a, b) { return a.gpuIdx - b.gpuIdx; });
+  });
+  var metricList = Object.keys(displaySet).sort();
 
   document.getElementById('subtitle').textContent =
     runIds.length + ' run' + (runIds.length === 1 ? '' : 's') + ' · ' +
@@ -812,16 +831,40 @@ header .generated { color: #9ca3af; font-size: 11px; margin-left: auto; font-fam
     container.appendChild(h);
 
     var isLog = !!logScale[key];
+    var gpuEntries = virtMap[key] || null;
+    var multiGpu = gpuEntries && gpuEntries.length > 1;
+
+    function pushSeries(out, id, realKey, gpuIdx) {
+      var m = runs[id].metrics || {};
+      if (!m[realKey] || m[realKey].length === 0) return;
+      var sorted = m[realKey].slice().sort(function (a, b) { return a[0] - b[0]; });
+      if (isLog) sorted = sorted.filter(function (p) { return p[1] > 0; });
+      if (sorted.length === 0) return;
+      var label = runs[id].name || id;
+      var dash = "";
+      if (gpuIdx !== null) {
+        if (multiGpu) label = label + " · gpu" + gpuIdx;
+        dash = GPU_DASH[gpuIdx % GPU_DASH.length];
+      }
+      out.push({
+        id: id + (gpuIdx !== null ? "#gpu" + gpuIdx : ""),
+        name: label,
+        color: runColors[id],
+        dash: dash,
+        data: sorted,
+      });
+    }
 
     var series = [];
     runIds.forEach(function (id) {
       if (!visible[id]) return;
-      var m = runs[id].metrics || {};
-      if (!m[key] || m[key].length === 0) return;
-      var sorted = m[key].slice().sort(function (a, b) { return a[0] - b[0]; });
-      if (isLog) sorted = sorted.filter(function (p) { return p[1] > 0; });
-      if (sorted.length === 0) return;
-      series.push({ id: id, name: runs[id].name || id, color: runColors[id], data: sorted });
+      if (gpuEntries) {
+        gpuEntries.forEach(function (entry) {
+          pushSeries(series, id, entry.realKey, entry.gpuIdx);
+        });
+      } else {
+        pushSeries(series, id, key, null);
+      }
     });
 
     var W = 520, H = 280;
@@ -932,6 +975,7 @@ header .generated { color: #9ca3af; font-size: 11px; margin-left: auto; font-fam
       path.setAttribute('stroke-width', '1.75');
       path.setAttribute('stroke-linejoin', 'round');
       path.setAttribute('stroke-linecap', 'round');
+      if (s.dash) path.setAttribute('stroke-dasharray', s.dash);
       svg.appendChild(path);
     });
 
